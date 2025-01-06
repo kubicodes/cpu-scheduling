@@ -3,11 +3,21 @@ package process
 import (
 	"cpu-scheduling/core/internal/types"
 	"fmt"
+	"time"
 )
 
 type PCB struct {
-	pid   int
-	state types.ProcessState
+	pid       int
+	state     types.ProcessState
+	createdAt time.Time
+}
+
+func NewPCB(pid int) *PCB {
+	return &PCB{
+		pid:       pid,
+		state:     types.NEW,
+		createdAt: time.Now(),
+	}
 }
 
 func (p *PCB) GetPID() int {
@@ -46,4 +56,8 @@ func (p *PCB) SetState(state types.ProcessState) error {
 	p.state = state
 
 	return nil
+}
+
+func (p *PCB) GetCreationTime() time.Time {
+	return p.createdAt
 }

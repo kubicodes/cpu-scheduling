@@ -1,5 +1,7 @@
 package types
 
+import "time"
+
 type ProcessState int
 
 const (
@@ -13,5 +15,6 @@ const (
 type Process interface {
 	GetPID() int
 	GetState() ProcessState
-	SetState(state ProcessState)
+	SetState(state ProcessState) error
+	GetCreationTime() time.Time
 }

@@ -3,7 +3,40 @@ package process
 import (
 	"cpu-scheduling/core/internal/types"
 	"testing"
+	"time"
 )
+
+func TestNewPCB(t *testing.T) {
+	t.Run("should create PCB with provided PID", func(t *testing.T) {
+		pid := 123
+		pcb := NewPCB(pid)
+
+		if pcb.GetPID() != pid {
+			t.Errorf("expected PID %d, got %d", pid, pcb.GetPID())
+		}
+	})
+
+	t.Run("should initialize with NEW state", func(t *testing.T) {
+		pcb := NewPCB(1)
+
+		if pcb.GetState() != types.NEW {
+			t.Errorf("expected state NEW, got %v", pcb.GetState())
+		}
+	})
+
+	t.Run("should set creation time", func(t *testing.T) {
+		beforeCreate := time.Now()
+		pcb := NewPCB(1)
+		afterCreate := time.Now()
+
+		creationTime := pcb.GetCreationTime()
+
+		if creationTime.Before(beforeCreate) || creationTime.After(afterCreate) {
+			t.Errorf("creation time %v should be between %v and %v",
+				creationTime, beforeCreate, afterCreate)
+		}
+	})
+}
 
 func TestPCB_GetPID(t *testing.T) {
 	t.Run("should return the pid", func(t *testing.T) {
@@ -179,6 +212,40 @@ func TestPCB_SetState(t *testing.T) {
 
 		if pcb.state != types.TERMINATED {
 			t.Errorf("expected state to be TERMINATED, got %d", pcb.state)
+		}
+	})
+}
+
+func TestPCB_GetCreationTime(t *testing.T) {
+	t.Run("should return the creation time", func(t *testing.T) {
+		// Record time before creation
+		beforeCreate := time.Now()
+
+		// Create PCB
+		pcb := &PCB{
+			createdAt: time.Now(),
+		}
+
+		// Record time after creation
+		afterCreate := time.Now()
+
+		// Get the creation time
+		creationTime := pcb.GetCreationTime()
+
+		// Creation time should be between beforeCreate and afterCreate
+		if creationTime.Before(beforeCreate) || creationTime.After(afterCreate) {
+			t.Errorf("creation time %v should be between %v and %v",
+				creationTime, beforeCreate, afterCreate)
+		}
+	})
+
+	t.Run("should not return zero time", func(t *testing.T) {
+		pcb := &PCB{
+			createdAt: time.Now(),
+		}
+
+		if pcb.GetCreationTime().IsZero() {
+			t.Error("creation time should not be zero")
 		}
 	})
 }
