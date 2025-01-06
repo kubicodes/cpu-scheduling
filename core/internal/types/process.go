@@ -1,6 +1,8 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 type ProcessState int
 
@@ -17,4 +19,5 @@ type Process interface {
 	GetState() ProcessState
 	SetState(state ProcessState) error
 	GetCreationTime() time.Time
+	GetContext() ProcessContext
 }
