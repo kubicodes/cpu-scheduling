@@ -5,4 +5,6 @@ type ProcessContext interface {
 	SetProgramCounter(pc uint64) error
 	GetRegisterValue(register RegisterName) (uint64, error)
 	SetRegisterValue(register RegisterName, value uint64) error
+	SaveState()
+	LoadState()
 }

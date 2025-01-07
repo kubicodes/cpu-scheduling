@@ -8,6 +8,12 @@ import (
 type ProcessContext struct {
 	programCounter uint64
 	registers      map[types.RegisterName]uint64
+	state          *contextState
+}
+
+type contextState struct {
+	programCounter uint64
+	registers      map[types.RegisterName]uint64
 }
 
 func NewProcessContext() *ProcessContext {
@@ -22,6 +28,7 @@ func NewProcessContext() *ProcessContext {
 	return &ProcessContext{
 		programCounter: 0,
 		registers:      registers,
+		state:          nil,
 	}
 }
 
@@ -56,4 +63,33 @@ func (p *ProcessContext) SetRegisterValue(register types.RegisterName, value uin
 
 	p.registers[register] = value
 	return nil
+}
+
+func (p *ProcessContext) SaveState() {
+	registersCopy := make(map[types.RegisterName]uint64)
+
+	for reg, value := range p.registers {
+		registersCopy[reg] = value
+	}
+
+	state := &contextState{
+		programCounter: p.programCounter,
+		registers:      registersCopy,
+	}
+
+	p.state = state
+}
+
+func (p *ProcessContext) LoadState() {
+	if p.state == nil {
+		return
+	}
+
+	p.programCounter = p.state.programCounter
+
+	for reg, value := range p.state.registers {
+		p.registers[reg] = value
+	}
+
+	p.state = nil
 }

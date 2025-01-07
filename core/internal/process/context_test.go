@@ -131,3 +131,108 @@ func TestProcessContext_SetRegisterValue(t *testing.T) {
 		}
 	})
 }
+
+func TestProcessContext_SaveState(t *testing.T) {
+	t.Run("should save current program counter", func(t *testing.T) {
+		context := NewProcessContext()
+		context.programCounter = 100 // Set some value
+
+		context.SaveState()
+
+		if context.state.programCounter != 100 {
+			t.Errorf("expected saved program counter to be 100, got %d",
+				context.state.programCounter)
+		}
+	})
+
+	t.Run("should save all register values", func(t *testing.T) {
+		context := NewProcessContext()
+
+		// Set some register values
+		context.SetRegisterValue(types.RAX, 42)
+		context.SetRegisterValue(types.RBX, 100)
+
+		context.SaveState()
+
+		// Check saved values
+		if context.state.registers[types.RAX] != 42 {
+			t.Errorf("expected saved RAX to be 42, got %d",
+				context.state.registers[types.RAX])
+		}
+		if context.state.registers[types.RBX] != 100 {
+			t.Errorf("expected saved RBX to be 100, got %d",
+				context.state.registers[types.RBX])
+		}
+	})
+
+	t.Run("should create deep copy of registers", func(t *testing.T) {
+		context := NewProcessContext()
+		context.SetRegisterValue(types.RAX, 42)
+
+		context.SaveState()
+
+		// Modify current state
+		context.SetRegisterValue(types.RAX, 100)
+
+		// Saved state should remain unchanged
+		if context.state.registers[types.RAX] != 42 {
+			t.Errorf("saved state was modified, expected 42, got %d",
+				context.state.registers[types.RAX])
+		}
+	})
+}
+
+func TestProcessContext_LoadState(t *testing.T) {
+	t.Run("should do nothing when no state is saved", func(t *testing.T) {
+		context := NewProcessContext()
+		originalPC := context.GetProgramCounter()
+
+		context.LoadState()
+
+		if context.GetProgramCounter() != originalPC {
+			t.Errorf("program counter should not change when no state is saved")
+		}
+	})
+
+	t.Run("should restore program counter from saved state", func(t *testing.T) {
+		context := NewProcessContext()
+		context.SetProgramCounter(100)
+		context.SaveState()
+
+		// Change current state
+		context.SetProgramCounter(200)
+
+		// Load saved state
+		context.LoadState()
+
+		if context.GetProgramCounter() != 100 {
+			t.Errorf("expected program counter to be 100, got %d",
+				context.GetProgramCounter())
+		}
+	})
+
+	t.Run("should restore register values from saved state", func(t *testing.T) {
+		context := NewProcessContext()
+
+		// Set initial values and save
+		context.SetRegisterValue(types.RAX, 42)
+		context.SetRegisterValue(types.RBX, 100)
+		context.SaveState()
+
+		// Change current values
+		context.SetRegisterValue(types.RAX, 50)
+		context.SetRegisterValue(types.RBX, 200)
+
+		// Load saved state
+		context.LoadState()
+
+		// Verify restored values
+		rax, _ := context.GetRegisterValue(types.RAX)
+		rbx, _ := context.GetRegisterValue(types.RBX)
+
+		if rax != 42 || rbx != 100 {
+			t.Errorf("expected registers RAX=42, RBX=100, got RAX=%d, RBX=%d",
+				rax, rbx)
+		}
+	})
+}
