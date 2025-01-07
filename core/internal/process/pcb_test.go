@@ -249,3 +249,14 @@ func TestPCB_GetCreationTime(t *testing.T) {
 		}
 	})
 }
+
+func TestPCB_GetContext(t *testing.T) {
+	t.Run("should return initialized context", func(t *testing.T) {
+		pcb := NewPCB(1)
+		context := pcb.GetContext()
+
+		if context == nil {
+			t.Error("context should not be nil")
+		}
+	})
+}
