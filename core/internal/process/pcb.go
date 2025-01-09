@@ -11,14 +11,16 @@ type PCB struct {
 	state     types.ProcessState
 	createdAt time.Time
 	context   types.ProcessContext
+	task      types.Task
 }
 
-func NewPCB(pid int) *PCB {
+func NewPCB(pid int, task types.Task) *PCB {
 	return &PCB{
 		pid:       pid,
 		state:     types.NEW,
 		createdAt: time.Now(),
 		context:   NewProcessContext(),
+		task:      task,
 	}
 }
 
@@ -66,4 +68,8 @@ func (p *PCB) GetCreationTime() time.Time {
 
 func (p *PCB) GetContext() types.ProcessContext {
 	return p.context
+}
+
+func (p *PCB) ExecuteTask() (any, error) {
+	return p.task.Execute()
 }

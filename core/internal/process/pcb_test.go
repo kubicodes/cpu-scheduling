@@ -2,14 +2,19 @@ package process
 
 import (
 	"cpu-scheduling/core/internal/types"
+	"fmt"
 	"testing"
 	"time"
 )
 
 func TestNewPCB(t *testing.T) {
+	mockTask := NewTask(func() (any, error) {
+		return nil, nil
+	})
+
 	t.Run("should create PCB with provided PID", func(t *testing.T) {
 		pid := 123
-		pcb := NewPCB(pid)
+		pcb := NewPCB(pid, mockTask)
 
 		if pcb.GetPID() != pid {
 			t.Errorf("expected PID %d, got %d", pid, pcb.GetPID())
@@ -17,7 +22,7 @@ func TestNewPCB(t *testing.T) {
 	})
 
 	t.Run("should initialize with NEW state", func(t *testing.T) {
-		pcb := NewPCB(1)
+		pcb := NewPCB(1, mockTask)
 
 		if pcb.GetState() != types.NEW {
 			t.Errorf("expected state NEW, got %v", pcb.GetState())
@@ -26,7 +31,7 @@ func TestNewPCB(t *testing.T) {
 
 	t.Run("should set creation time", func(t *testing.T) {
 		beforeCreate := time.Now()
-		pcb := NewPCB(1)
+		pcb := NewPCB(1, mockTask)
 		afterCreate := time.Now()
 
 		creationTime := pcb.GetCreationTime()
@@ -251,12 +256,75 @@ func TestPCB_GetCreationTime(t *testing.T) {
 }
 
 func TestPCB_GetContext(t *testing.T) {
+	mockTask := NewTask(func() (any, error) {
+		return nil, nil
+	})
+
 	t.Run("should return initialized context", func(t *testing.T) {
-		pcb := NewPCB(1)
+		pcb := NewPCB(1, mockTask)
+
 		context := pcb.GetContext()
 
 		if context == nil {
 			t.Error("context should not be nil")
+		}
+	})
+}
+
+func TestPCB_ExecuteTask(t *testing.T) {
+
+	t.Run("should return the result of the task", func(t *testing.T) {
+		mockTask := NewTask(func() (any, error) {
+			return 1, nil
+		})
+		pcb := NewPCB(1, mockTask)
+
+		result, err := pcb.ExecuteTask()
+
+		if err != nil {
+			t.Errorf("expected error to be nil, got %v", err)
+		}
+
+		if result != 1 {
+			t.Errorf("expected result to be 1, got %v", result)
+		}
+	})
+
+	t.Run("should return error if the task returns an error", func(t *testing.T) {
+		mockTask := NewTask(func() (any, error) {
+			return nil, fmt.Errorf("mock error")
+		})
+
+		pcb := NewPCB(1, mockTask)
+
+		_, err := pcb.ExecuteTask()
+
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+
+		expectedErrorMsg := "mock error"
+
+		if err.Error() != expectedErrorMsg {
+			t.Errorf("expected error message to be %s, got %s", expectedErrorMsg, err.Error())
+		}
+	})
+
+	t.Run("should work with void functions", func(t *testing.T) {
+		mockTask := NewTask(func() (any, error) {
+			return nil, nil
+		})
+
+		pcb := NewPCB(1, mockTask)
+
+		result, err := pcb.ExecuteTask()
+
+		if err != nil {
+			t.Errorf("expected error to be nil, got %v", err)
+		}
+
+		if result != nil {
+			t.Errorf("expected result to be nil, got %v", result)
 		}
 	})
 }
