@@ -20,4 +20,5 @@ type Process interface {
 	SetState(state ProcessState) error
 	GetCreationTime() time.Time
 	GetContext() ProcessContext
+	ExecuteTask() (any, error)
 }
