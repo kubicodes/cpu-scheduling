@@ -7,20 +7,23 @@ import (
 )
 
 type PCB struct {
-	pid       int
-	state     types.ProcessState
-	createdAt time.Time
-	context   types.ProcessContext
-	task      types.Task
+	pid             int
+	state           types.ProcessState
+	createdAt       time.Time
+	lastStateChange time.Time
+	context         types.ProcessContext
+	task            types.Task
 }
 
 func NewPCB(pid int, task types.Task) *PCB {
+	now := time.Now()
 	return &PCB{
-		pid:       pid,
-		state:     types.NEW,
-		createdAt: time.Now(),
-		context:   NewProcessContext(),
-		task:      task,
+		pid:             pid,
+		state:           types.NEW,
+		createdAt:       now,
+		lastStateChange: now,
+		context:         NewProcessContext(),
+		task:            task,
 	}
 }
 
@@ -58,7 +61,7 @@ func (p *PCB) SetState(state types.ProcessState) error {
 	}
 
 	p.state = state
-
+	p.lastStateChange = time.Now()
 	return nil
 }
 
@@ -72,4 +75,12 @@ func (p *PCB) GetContext() types.ProcessContext {
 
 func (p *PCB) ExecuteTask() (any, error) {
 	return p.task.Execute()
+}
+
+func (p *PCB) GetTimeInState() time.Duration {
+	return time.Since(p.lastStateChange)
+}
+
+func (p *PCB) GetTotalTime() time.Duration {
+	return time.Since(p.createdAt)
 }
