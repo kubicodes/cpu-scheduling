@@ -1,4 +1,4 @@
-package scheduler
+package queue
 
 import (
 	"cpu-scheduling/core/internal/types"
