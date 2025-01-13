@@ -162,21 +162,33 @@ func TestFCFSQueue_Concurrency(t *testing.T) {
 	t.Run("should handle concurrent operations safely", func(t *testing.T) {
 		queue := NewFCFSQueue()
 		done := make(chan bool)
+		const numEnqueues = 100
+		const numDequeues = 50
+		dequeued := make(chan int, numDequeues) // Channel to track dequeued PIDs
 
 		// Concurrent enqueues
 		go func() {
-			for i := 0; i < 100; i++ {
+			for i := 0; i < numEnqueues; i++ {
 				p := process.NewPCB(i, process.NewTask(func() (any, error) { return nil, nil }))
-				queue.Enqueue(p)
+				err := queue.Enqueue(p)
+				if err != nil {
+					t.Errorf("enqueue failed: %v", err)
+				}
 			}
 			done <- true
 		}()
 
 		// Concurrent dequeues
 		go func() {
-			for i := 0; i < 50; i++ {
-				queue.Dequeue()
+			for i := 0; i < numDequeues; i++ {
+				if p, err := queue.Dequeue(); err == nil {
+					dequeued <- p.GetPID()
+				} else {
+					// If dequeue fails, try again
+					i--
+				}
 			}
+			close(dequeued)
 			done <- true
 		}()
 
@@ -195,9 +207,24 @@ func TestFCFSQueue_Concurrency(t *testing.T) {
 			<-done
 		}
 
-		// Final size should be 50 (100 enqueued - 50 dequeued)
-		if queue.Size() != 50 {
-			t.Errorf("expected final size 50, got %d", queue.Size())
+		// Verify final state
+		finalSize := queue.Size()
+		if finalSize != numEnqueues-numDequeues {
+			t.Errorf("expected final size %d, got %d", numEnqueues-numDequeues, finalSize)
+		}
+
+		// Verify we dequeued exactly numDequeues processes
+		dequeuedCount := 0
+		seen := make(map[int]bool)
+		for pid := range dequeued {
+			if seen[pid] {
+				t.Errorf("PID %d was dequeued multiple times", pid)
+			}
+			seen[pid] = true
+			dequeuedCount++
+		}
+		if dequeuedCount != numDequeues {
+			t.Errorf("expected %d dequeued processes, got %d", numDequeues, dequeuedCount)
 		}
 	})
 }
