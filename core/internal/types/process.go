@@ -22,6 +22,6 @@ type Process interface {
 	GetContext() ProcessContext
 	ExecuteTask() (any, error)
 	// Time tracking
-	GetTimeInState() time.Duration // How long the process has been in current state
-	GetTotalTime() time.Duration   // Total time since process creation
+	GetTimeInState() time.Duration
+	GetTotalTime() time.Duration
 }
