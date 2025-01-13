@@ -21,4 +21,7 @@ type Process interface {
 	GetCreationTime() time.Time
 	GetContext() ProcessContext
 	ExecuteTask() (any, error)
+	// Time tracking
+	GetTimeInState() time.Duration
+	GetTotalTime() time.Duration
 }

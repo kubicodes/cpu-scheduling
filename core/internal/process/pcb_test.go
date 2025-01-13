@@ -328,3 +328,56 @@ func TestPCB_ExecuteTask(t *testing.T) {
 		}
 	})
 }
+
+func TestPCB_GetTimeInState(t *testing.T) {
+	t.Run("should return correct duration in current state", func(t *testing.T) {
+		pcb := NewPCB(1, NewTask(func() (any, error) { return nil, nil }))
+
+		pcb.SetState(types.READY)
+		time.Sleep(10 * time.Millisecond)
+
+		duration := pcb.GetTimeInState()
+		if duration < 10*time.Millisecond {
+			t.Errorf("expected duration >= 10ms, got %v", duration)
+		}
+	})
+
+	t.Run("should reset duration on state change", func(t *testing.T) {
+		pcb := NewPCB(1, NewTask(func() (any, error) { return nil, nil }))
+
+		pcb.SetState(types.READY)
+		time.Sleep(10 * time.Millisecond)
+		pcb.SetState(types.RUNNING)
+
+		duration := pcb.GetTimeInState()
+		if duration >= 10*time.Millisecond {
+			t.Errorf("expected duration < 10ms after state change, got %v", duration)
+		}
+	})
+}
+
+func TestPCB_GetTotalTime(t *testing.T) {
+	t.Run("should return total time since creation", func(t *testing.T) {
+		pcb := NewPCB(1, NewTask(func() (any, error) { return nil, nil }))
+
+		time.Sleep(10 * time.Millisecond)
+
+		totalTime := pcb.GetTotalTime()
+		if totalTime < 10*time.Millisecond {
+			t.Errorf("expected total time >= 10ms, got %v", totalTime)
+		}
+	})
+
+	t.Run("should increase regardless of state changes", func(t *testing.T) {
+		pcb := NewPCB(1, NewTask(func() (any, error) { return nil, nil }))
+
+		time.Sleep(5 * time.Millisecond)
+		pcb.SetState(types.READY)
+		time.Sleep(5 * time.Millisecond)
+
+		totalTime := pcb.GetTotalTime()
+		if totalTime < 10*time.Millisecond {
+			t.Errorf("expected total time >= 10ms after state change, got %v", totalTime)
+		}
+	})
+}
